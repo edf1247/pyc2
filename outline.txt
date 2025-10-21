@@ -1,0 +1,25 @@
+Features:
+
+Server and Agents
+
+
+Server:
+- Accept multiple incoming connections
+- Send commands to specific agents, recieve their output
+
+Agents:
+- Should periodically connect to the server to recieve instructions and send the output of instructions
+
+
+Design:
+
+Server:
+	- Terminal based
+	- Run commands
+	- Commands:
+		- list (lists current connects)
+		- kill #id (kills agent with id)
+		- kill all (kills all)
+		- help (lists all commands)
+		- enter #id (begins interaction with agent of id)
+	- When interacting with an agent, be able to run shell commands
