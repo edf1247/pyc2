@@ -1,8 +1,14 @@
+import socket
+import threading
+
 command_history = []
 prompt = "shell> "
 connections_dict = dict()
+port = 4444
+ip_addr = "127.0.0.1"
 
-def shell_input(history, cmd_dict):
+
+def shell_input(history, cmd_dict, stop_event):
     command = input(prompt)
     while command != "quit":
         if command in cmd_dict:
@@ -13,6 +19,7 @@ def shell_input(history, cmd_dict):
         else:
             print("Not a valid command.")
         command = input(prompt)
+    stop_event.set()
     return
 
 def history(hist):
@@ -23,6 +30,27 @@ def list_connections(connections_dict):
     for agent in connections_dict:
         print(f"{prompt}{agent}")
     return
+
+def start_server(host, port, stop_event):
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((host, port))
+    server.listen(5)
+    server.settimeout(0.5)
+    print(f"{prompt}Listening on {host}:{port}")
+    try:
+        while not stop_event.is_set():
+            try:    
+                c, addr = server.accept()
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+            else:
+                print(f"{prompt}Connection recieved from {addr}")
+                c.close()
+    finally:
+        server.close()
+        print("Server shutting down.")
 
 command_dict = {"history": [history, [command_history]], "list": [list_connections, [connections_dict]]}
 
@@ -46,4 +74,11 @@ def welcome_message():
 
 if __name__ == "__main__":
     welcome_message()
-    shell_input(command_history, command_dict)
+    stop_event = threading.Event()
+    server_thread = threading.Thread(target=start_server, args=(ip_addr, port, stop_event))
+    input_thread = threading.Thread(target=shell_input, args=(command_history, command_dict, stop_event))
+    server_thread.start()
+    input_thread.start()
+
+    server_thread.join()
+    input_thread.join()
