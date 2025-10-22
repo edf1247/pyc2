@@ -49,6 +49,22 @@ def kill_agent(connections_dict, agent_id):
     else:
         print(f"Invalid agent id.")
 
+def enter_agent(connections_dict, agent_id):
+    if agent_id in connections_dict:
+        prompt = f"{agent_id}> "
+        handle_agent_interaction(connections_dict, agent_id, prompt)
+    else:
+        print("Invalid agent id.")
+
+def handle_agent_interaction(connections_dict, agent_id, prompt):
+    user_input = input(prompt)
+    agent = connections_dict[agent_id]
+    while user_input != "exit":
+        agent.sendall(user_input.encode('utf-8'))
+        res = agent.recv(1024)
+        print(f"{prompt}{res.decode()}")
+        user_input = input(prompt)
+
 def start_server(host, port, stop_event):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((host, port))
@@ -78,7 +94,7 @@ def help_menu():
     for key in command_dict.keys():
         print(f"> {key}")
 
-command_dict = {"kill": [kill_agent, [connections_dict]],"help": [help_menu, []],"history": [history, [command_history]], "list": [list_connections, [connections_dict]], "quit": 0}
+command_dict = {"enter": [enter_agent, [connections_dict]], "kill": [kill_agent, [connections_dict]],"help": [help_menu, []],"history": [history, [command_history]], "list": [list_connections, [connections_dict]], "quit": 0}
 
 def welcome_message():
     banner = "=" * 77
